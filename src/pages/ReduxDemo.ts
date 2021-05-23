@@ -57,7 +57,11 @@ const ReduxDemo: IReduxDemo = {
 
     const timerPlace = document.getElementById('forTimer') as HTMLElement;
     timerPlace.innerHTML = Timer.render();
-    const byeHandler = Timer.afterRender();
+    const TimerUnmountHandler = Timer.afterRender();
+
+    const byeHandler = () => {
+      TimerUnmountHandler();
+    };
 
     return byeHandler;
   },

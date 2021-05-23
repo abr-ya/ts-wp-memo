@@ -7,3 +7,8 @@ export const ENABLE_BUTTONS = 'ENABLE_BUTTONS';
 export const START = 'START';
 export const STOP = 'STOP';
 export const FIRST = 'FIRST';
+
+export const GSTART = 'GSTART';
+export const GSTOP = 'GSTOP';
+export const MATCH = 'MATCH';
+export const ERROR = 'ERROR';

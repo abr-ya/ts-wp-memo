@@ -5,9 +5,13 @@ interface IProps {
   value: number;
 }
 
+interface ITimerHandlers {
+  startHandler: () => void;
+  stopHandler: () => void;
+}
 interface ITimer {
   render: () => string;
-  afterRender: () => void;
+  afterRender: (handlers?: ITimerHandlers) => () => void;
   update: (props: IProps) => void;
   closeHandler: () => void;
 }
@@ -22,7 +26,7 @@ const Timer: ITimer = {
       </div>
     </div>
   `,
-  afterRender: () => {
+  afterRender: (handlers) => {
     const startBtn = document.getElementById('start') as HTMLButtonElement;
     const stopBtn = document.getElementById('stop') as HTMLButtonElement;
 
@@ -48,7 +52,7 @@ const Timer: ITimer = {
     // блокируем кнопки
     disableBtn(startBtn, stopBtn, oldState.active);
 
-    // 111
+    // обработчик подписки
     const storeHandler = () => {
       const state = store.getState().time;
       if (state.active !== oldState.active) {
@@ -70,6 +74,7 @@ const Timer: ITimer = {
     // создаём обработчики
     let timerWork: NodeJS.Timeout | null;
     const startDo: () => void = () => {
+      if (handlers) handlers.startHandler();
       dsp(start());
       const timerPlace = document.getElementById('timer') as HTMLElement;
       timerWork = setInterval(() => {
@@ -78,6 +83,7 @@ const Timer: ITimer = {
       }, 100);
     };
     const stopDo: () => void = () => {
+      if (handlers) handlers.stopHandler();
       dsp(stop());
       if (timerWork) clearInterval(timerWork);
     };
@@ -87,13 +93,13 @@ const Timer: ITimer = {
     stopBtn.addEventListener('click', stopDo);
 
     // функция отписки
-    const byeHandler = () => {
+    const unmountHandler = () => {
       startBtn.removeEventListener('click', startDo);
       stopBtn.removeEventListener('click', stopDo);
       storeUnsubscribe();
     };
 
-    return byeHandler;
+    return unmountHandler;
   },
   update: () => false,
   closeHandler: () => false,

@@ -1,3 +1,8 @@
+import store, { dsp } from '../redux/init';
+import {
+  stop, gstart, gstop, match, error,
+} from '../redux/actions';
+import Timer from '../components/Timer';
 import './game.scss';
 
 interface IGame {
@@ -10,66 +15,46 @@ interface IElement extends Element {
   style?: any;
 }
 
+const closeCard = '<img class="back-face" src="img/js-badge.svg" alt="JS Badge" />';
+const setSize = 2;
+const list1 = ['angular', 'aurelia', 'backbone', 'ember', 'react', 'vue'];
+const newCard = (key: string, size: number) => `
+  <div
+    class="memory-card"
+    data-framework="${key}"
+    style="width: calc(${100 / size}% - 10px); height: calc(${100 / size}% - 10px);"
+  >
+    <img class="front-face" src="img/${key}.svg" alt="${key}" />
+    ${closeCard}
+  </div>
+`;
+
 const Game: IGame = {
-  render: () => `
-    <section class="memory-game">
-      <div class="memory-card" data-framework="aurelia">
-        <img class="front-face" src="img/aurelia.svg" alt="Aurelia" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
+  render: () => {
+    let html = `
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">ходов: <span id="moves"></span></h5>
+        <h5 class="card-title">ошибок: <span id="errors"></span></h5>
       </div>
-      <div class="memory-card" data-framework="aurelia">
-        <img class="front-face" src="img/aurelia.svg" alt="Aurelia" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
-      </div>
+    </div>
+    <div id="forTimer"></div>
+    <section class="memory-game">`;
 
-      <div class="memory-card" data-framework="vue">
-        <img class="front-face" src="img/vue.svg" alt="Vue" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
-      </div>
-      <div class="memory-card" data-framework="vue">
-        <img class="front-face" src="img/vue.svg" alt="Vue" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
-      </div>
+    let i = 1;
+    while ((setSize ** 2) / 2 >= i) {
+      const key = list1[i % list1.length];
+      html += newCard(key, setSize);
+      html += newCard(key, setSize);
+      i += 1;
+    }
 
-      <div class="memory-card" data-framework="angular">
-        <img class="front-face" src="img/angular.svg" alt="Angular" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
-      </div>
-      <div class="memory-card" data-framework="angular">
-        <img class="front-face" src="img/angular.svg" alt="Angular" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
-      </div>
+    html += '</section>';
 
-      <div class="memory-card" data-framework="ember">
-        <img class="front-face" src="img/ember.svg" alt="Ember" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
-      </div>
-      <div class="memory-card" data-framework="ember">
-        <img class="front-face" src="img/ember.svg" alt="Ember" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
-      </div>
-
-      <div class="memory-card" data-framework="backbone">
-        <img class="front-face" src="img/backbone.svg" alt="Backbone" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
-      </div>
-      <div class="memory-card" data-framework="backbone">
-        <img class="front-face" src="img/backbone.svg" alt="Backbone" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
-      </div>
-
-      <div class="memory-card" data-framework="react">
-        <img class="front-face" src="img/react.svg" alt="React" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
-      </div>
-      <div class="memory-card" data-framework="react">
-        <img class="front-face" src="img/react.svg" alt="React" />
-        <img class="back-face" src="img/js-badge.svg" alt="JS Badge" />
-      </div>
-    </section>
-  `,
+    return html;
+  },
   afterRender: () => {
-    console.log('time to play');
+    // логика игры
     const cards = document.querySelectorAll('.memory-card');
 
     let hasFlippedCard = false;
@@ -102,18 +87,19 @@ const Game: IGame = {
       }, 1000);
     }
 
+    // сравнение карт
     function checkForMatch() {
       const isMatch = firstCard.dataset.framework === secondCard.dataset.framework;
       if (isMatch) {
         disableCards();
+        dsp(match());
       } else {
         unflipCards();
+        dsp(error());
       }
     }
 
-    function flipCard(this: any) {
-      console.log('flip!');
-      console.log(this.dataset.framework);
+    function flipCard(this: HTMLElement) {
       console.log(this.dataset.open);
 
       if (this.dataset.open) {
@@ -121,7 +107,10 @@ const Game: IGame = {
         return;
       }
 
-      if (lockBoard) return;
+      if (lockBoard) {
+        console.log('Для начала игры нажмите старт!');
+        return;
+      }
       if (this === firstCard) return;
 
       this.classList.add('flip');
@@ -141,11 +130,72 @@ const Game: IGame = {
       cards.forEach((card: IElement) => {
         const randomPos = Math.floor(Math.random() * 12);
         card.style.order = randomPos;
+        // card.dataset.open = false;
       });
     };
 
     cards.forEach((card: IElement) => card.addEventListener('click', flipCard));
     shuffle();
+    // /логика игры
+
+    // получаем стартовое значение
+    let oldState = store.getState().game;
+
+    // проверяем блокировку
+    lockBoard = !oldState.active;
+
+    // обработчик подписки
+    const storeHandler = () => {
+      const state = store.getState().game;
+      if (state.active !== oldState.active) {
+        lockBoard = !state.active;
+      }
+
+      if (state.moves !== oldState.moves) {
+        const movesPlace = document.getElementById('moves') as HTMLElement;
+        const errorsPlace = document.getElementById('errors') as HTMLButtonElement;
+
+        movesPlace.innerHTML = state.moves.toString();
+        errorsPlace.innerHTML = state.errors.toString();
+
+        const isWin = (state.moves - state.errors) * 2 === setSize ** 2;
+        console.log(isWin);
+        if (isWin) {
+          console.log('победа!');
+          // dsp(stop());
+          // dsp(gstop());
+        }
+      }
+
+      oldState = state;
+    };
+
+    // подписываемся на обновления
+    const storeUnsubscribe = store.subscribe(storeHandler);
+
+    // создаём обработчики
+    const startHandler: () => void = () => {
+      dsp(gstart());
+    };
+
+    const stopHandler: () => void = () => {
+      dsp(gstop());
+      // shuffle();
+      console.log('здесь должен быть сброс');
+    };
+
+    // добавляем таймер
+    const timerPlace = document.getElementById('forTimer') as HTMLElement;
+    timerPlace.innerHTML = Timer.render();
+    const TimerUnmountHandler = Timer.afterRender({ startHandler, stopHandler });
+
+    // функция отписки
+    const unmountHandler = () => {
+      storeUnsubscribe();
+      TimerUnmountHandler();
+    };
+
+    return unmountHandler;
   },
 };
 

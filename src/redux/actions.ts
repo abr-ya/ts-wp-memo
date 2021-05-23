@@ -2,6 +2,7 @@ import { createAction, createCustomAction } from 'typesafe-actions';
 import {
   CHANGE_THEME, DECREMENT, DISABLE_BUTTONS, ENABLE_BUTTONS, INCREMENT,
   START, STOP, FIRST,
+  GSTART, GSTOP, MATCH, ERROR,
 } from './types';
 
 export const increment = createAction(INCREMENT)();
@@ -18,14 +19,8 @@ export const start = createAction(START)();
 export const stop = createAction(STOP)();
 export const first = createAction(FIRST)();
 
-// ToDo!!!
-export function asyncIncrement() {
-  // eslint-disable-next-line func-names
-  return function (dispatch: any) {
-    dispatch(disableButtons());
-    setTimeout(() => {
-      dispatch(increment());
-      dispatch(enableButtons());
-    }, 1500);
-  };
-}
+// игра
+export const gstart = createAction(GSTART)();
+export const gstop = createAction(GSTOP)();
+export const match = createAction(MATCH)();
+export const error = createAction(ERROR)();

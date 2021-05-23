@@ -2,6 +2,7 @@ import { combineReducers } from 'redux';
 import {
   CHANGE_THEME, DECREMENT, DISABLE_BUTTONS, ENABLE_BUTTONS, INCREMENT,
   START, STOP, FIRST,
+  GSTART, GSTOP, MATCH, ERROR,
 } from './types';
 import { IAction } from './interfaces';
 
@@ -55,10 +56,34 @@ const timeReducer = (state = initialTimeState, action: IAction) => {
   }
 };
 
+const initialGameState = {
+  active: false,
+  moves: 0,
+  errors: 0,
+  size: 4,
+};
+
+const gameReducer = (state = initialGameState, action: IAction) => {
+  switch (action.type) {
+    case GSTART:
+      return {
+        ...state, active: true, moves: 0, errors: 0
+      };
+    case GSTOP:
+      return { ...state, active: false };
+    case MATCH:
+      return { ...state, moves: state.moves + 1 };
+    case ERROR:
+      return { ...state, moves: state.moves + 1, errors: state.errors + 1 };
+    default: return state;
+  }
+};
+
 const rootReducer = combineReducers({
   counter: counterReducer,
   theme: themeReducer,
   time: timeReducer,
+  game: gameReducer,
 });
 
 export default rootReducer;
