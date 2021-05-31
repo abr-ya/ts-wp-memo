@@ -67,7 +67,7 @@ const gameReducer = (state = initialGameState, action: IAction) => {
   switch (action.type) {
     case GSTART:
       return {
-        ...state, active: true, moves: 0, errors: 0
+        ...state, active: true, moves: 0, errors: 0,
       };
     case GSTOP:
       return { ...state, active: false };

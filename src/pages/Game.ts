@@ -59,8 +59,8 @@ const Game: IGame = {
 
     let hasFlippedCard = false;
     let lockBoard = false;
-    let firstCard: IElement;
-    let secondCard: IElement;
+    let firstCard: HTMLElement;
+    let secondCard: HTMLElement;
 
     const emptyDiv = document.createElement('div');
 
@@ -70,8 +70,8 @@ const Game: IGame = {
     }
 
     function disableCards() {
-      firstCard.dataset.open = true;
-      secondCard.dataset.open = true;
+      firstCard.dataset.open = 'true';
+      secondCard.dataset.open = 'true';
 
       resetBoard();
     }
